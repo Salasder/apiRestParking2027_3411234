@@ -17,11 +17,11 @@ import jakarta.persistence.LockModeType;
 public interface TarifaRepository extends JpaRepository<Tarifa, Long> {
 
 	@Query("select count(t) > 0 from Tarifa t where t.tipo = :tipo and t.vigenteHasta is null")
-	boolean existByTipoAndVigenteHastaIsNull(@Param("tipo") TipoVehiculo tipo);
+	boolean existsByTipoAndVigenteHastaIsNull(@Param("tipo") TipoVehiculo tipo);
 
 	Optional<Tarifa> findFirstByTipoAndVigenteHastaIsNull(TipoVehiculo tipo);
 
-	List<Tarifa> findAllByTipoAscVigenteHastaDesc();
+	List<Tarifa> findAllByOrderByTipoAscVigenteDesdeDesc();
 
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select t from Tarifa t where t.tipo = :tipo and t.vigenteHasta is null")
