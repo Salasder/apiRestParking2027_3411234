@@ -15,8 +15,8 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 @RestControllerAdvice
 public class GlobalExeceptionHandler {
 
-	@ExceptionHandler(ApiExeception.class)
-	public ResponseEntity<ErrorResponse> api(ApiExeception ex) {
+	@ExceptionHandler(ApiException.class)
+	public ResponseEntity<ErrorResponse> api(ApiException ex) {
 
 		return build(ex.getStatus(), ex.getMessage(), List.of());
 

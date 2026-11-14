@@ -11,7 +11,7 @@ import com.sena.apiparking.config.ZonaHoraria;
 import com.sena.apiparking.dto.CobroDetalle;
 import com.sena.apiparking.dto.TarifaRequest;
 import com.sena.apiparking.dto.TarifaResponse;
-import com.sena.apiparking.exception.ApiExeception;
+import com.sena.apiparking.exception.ApiException;
 import com.sena.apiparking.model.Tarifa;
 import com.sena.apiparking.model.TipoVehiculo;
 import com.sena.apiparking.repository.TarifaRepository;
@@ -43,13 +43,13 @@ public class TarifaService {
 	@Transactional(readOnly = true)
 	public TarifaResponse obtener(Long id) {
 		return TarifaResponse.de(
-				tarifaRepo.findById(id).orElseThrow(() -> ApiExeception.notFound("Tarifa " + id + " no encontrada")));
+				tarifaRepo.findById(id).orElseThrow(() -> ApiException.notFound("Tarifa " + id + " no encontrada")));
 	}
 
 	@Transactional(readOnly = true)
 	public void exigirTarifaVigente(TipoVehiculo tipo) {
 		if (!tarifaRepo.existsByTipoAndVigenteHastaIsNull(tipo)) {
-			throw ApiExeception.conflict("No hay tarifa vigente para " + tipo);
+			throw ApiException.conflict("No hay tarifa vigente para " + tipo);
 		}
 	}
 
@@ -74,7 +74,7 @@ public class TarifaService {
 	private Tarifa tarifaVigenteEn(TipoVehiculo tipo, LocalDateTime momento) {
 		return tarifaRepo.vigentesEn(tipo, momento).stream().findFirst()
 				.or(() -> tarifaRepo.findFirstByTipoAndVigenteHastaIsNull(tipo))
-				.orElseThrow(() -> ApiExeception.conflict("No hay tarifa vigente para " + tipo));
+				.orElseThrow(() -> ApiException.conflict("No hay tarifa vigente para " + tipo));
 	}
 
 }

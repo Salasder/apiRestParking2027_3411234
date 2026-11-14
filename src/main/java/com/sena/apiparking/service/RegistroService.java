@@ -11,7 +11,7 @@ import com.sena.apiparking.dto.CobroDetalle;
 import com.sena.apiparking.dto.EntradaRequest;
 import com.sena.apiparking.dto.RegistroResponse;
 import com.sena.apiparking.dto.VehiculoResponse;
-import com.sena.apiparking.exception.ApiExeception;
+import com.sena.apiparking.exception.ApiException;
 import com.sena.apiparking.model.EspacioParqueo;
 import com.sena.apiparking.model.EstadoEspacio;
 import com.sena.apiparking.model.RegistroParqueo;
@@ -36,14 +36,14 @@ public class RegistroService {
 		TipoVehiculo tipo = req.tipo();
 		String placa = normalizarPlaca(req.placa());
 		if (placa == null) {
-			throw ApiExeception.badrequest("La placa es obligatoria");
+			throw ApiException.badrequest("La placa es obligatoria");
 		}
 		Vehiculo vehiculo = vehiculoRepo.bloquearPorPlaca(placa).orElse(null);
 		if (registroRepo.existsByVehiculoPlacaAndFechaSalidaIsNull(placa)) {
-			throw ApiExeception.conflict("El vehiculo con placa " + placa + " ya esta dentro del parqueadero");
+			throw ApiException.conflict("El vehiculo con placa " + placa + " ya esta dentro del parqueadero");
 		}
 		if (vehiculo != null && vehiculo.getTipo() != tipo) {
-			throw ApiExeception.conflict("La placa " + placa + " esta registrada como " + vehiculo.getTipo());
+			throw ApiException.conflict("La placa " + placa + " esta registrada como " + vehiculo.getTipo());
 		}
 		tarifaService.exigirTarifaVigente(tipo);
 		if (vehiculo == null) {
@@ -63,9 +63,9 @@ public class RegistroService {
 	@Transactional
 	public RegistroResponse registrarSalida(Long id) {
 		RegistroParqueo r = registroRepo.bloquearPorId(id)
-				.orElseThrow(() -> ApiExeception.notFound("Registro " + id + " no encontrado"));
+				.orElseThrow(() -> ApiException.notFound("Registro " + id + " no encontrado"));
 		if (r.getFechaSalida() != null) {
-			throw ApiExeception.conflict("El registro " + id + " ya tiene salida registrada");
+			throw ApiException.conflict("El registro " + id + " ya tiene salida registrada");
 		}
 		return cerrar(r);
 	}
@@ -144,31 +144,31 @@ public class RegistroService {
 	private EspacioParqueo elegirEspacio(Integer numero, TipoVehiculo tipo) {
 		if (numero != null) {
 			EspacioParqueo e = espacioRepo.bloquearPorNumero(numero)
-					.orElseThrow(() -> ApiExeception.notFound("Espacio " + numero + " no existe"));
+					.orElseThrow(() -> ApiException.notFound("Espacio " + numero + " no existe"));
 			if (e.getTipo() != tipo) {
-				throw ApiExeception.conflict("El espacio " + numero + " es para " + e.getTipo() + ", no para " + tipo);
+				throw ApiException.conflict("El espacio " + numero + " es para " + e.getTipo() + ", no para " + tipo);
 			}
 			if (e.getEstado() == EstadoEspacio.OCUPADO) {
-				throw ApiExeception.conflict("El espacio " + numero + " esta ocupado");
+				throw ApiException.conflict("El espacio " + numero + " esta ocupado");
 			}
 			return e;
 		}
 		return espacioRepo.findFirstByTipoAndEstadoOrderByNumeroAscc(tipo, EstadoEspacio.LIBRE)
-				.orElseThrow(() -> ApiExeception.conflict("No hay espacios libres para " + tipo));
+				.orElseThrow(() -> ApiException.conflict("No hay espacios libres para " + tipo));
 	}
 
 	private RegistroParqueo buscar(Long id) {
-		return registroRepo.findById(id).orElseThrow(() -> ApiExeception.notFound("Registro " + id + " no encontrado"));
+		return registroRepo.findById(id).orElseThrow(() -> ApiException.notFound("Registro " + id + " no encontrado"));
 	}
 
-	private ApiExeception sinRegistroActivo(String placa) {
-		return ApiExeception.notFound("El vehiculo con placa " + placa + " no tiene un registro activo");
+	private ApiException sinRegistroActivo(String placa) {
+		return ApiException.notFound("El vehiculo con placa " + placa + " no tiene un registro activo");
 	}
 
 	private String placaObligatoria(String placa) {
 		String p = normalizarPlaca(placa);
 		if (p == null) {
-			throw ApiExeception.badrequest("Placa invalida");
+			throw ApiException.badrequest("Placa invalida");
 		}
 		return p;
 	}
@@ -179,7 +179,7 @@ public class RegistroService {
 		}
 		String p = placa.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
 		if (!p.matches("[A-Z0-9]{5,7}")) {
-			throw ApiExeception.badrequest("Placa invalida: debe tener entre 5 y 7 caracteres alfanumericos");
+			throw ApiException.badrequest("Placa invalida: debe tener entre 5 y 7 caracteres alfanumericos");
 		}
 		return p;
 	}

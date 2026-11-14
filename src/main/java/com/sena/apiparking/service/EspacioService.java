@@ -15,7 +15,7 @@ import com.sena.apiparking.model.EstadoEspacio;
 import com.sena.apiparking.model.TipoVehiculo;
 import com.sena.apiparking.repository.EspacioParqueoRepository;
 import com.sena.apiparking.repository.RegistroParqueoRepository;
-import com.sena.apiparking.exception.ApiExeception;
+import com.sena.apiparking.exception.ApiException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -31,7 +31,7 @@ public class EspacioService {
 	@Transactional
 	public EspacioResponse crear(EspacioRequest req) {
 		if (espacioRepo.existsByNumero(req.numero())) {
-			throw ApiExeception.conflict("Ya existe el espacio numero " + req.numero());
+			throw ApiException.conflict("Ya existe el espacio numero " + req.numero());
 		}
 
 		EspacioParqueo e = EspacioParqueo.builder().numero(req.numero()).tipo(req.tipo()).build();
@@ -42,15 +42,15 @@ public class EspacioService {
 	@Transactional
 	public List<EspacioResponse> crearLote(EspacioLoteRequest req) {
 		if (req.desde() > req.hasta()) {
-			throw ApiExeception.badrequest("'desde' no puede ser mayor que 'hasta'");
+			throw ApiException.badrequest("'desde' no puede ser mayor que 'hasta'");
 		}
 		if (req.hasta() - req.desde() + 1 > MAX_LOTE) {
-			throw ApiExeception.badrequest("Maximo " + MAX_LOTE + " espacios por lote");
+			throw ApiException.badrequest("Maximo " + MAX_LOTE + " espacios por lote");
 		}
 		List<EspacioParqueo> nuevos = new ArrayList<>();
 		for (int n = req.desde(); n <= req.hasta(); n++) {
 			if (espacioRepo.existsByNumero(n)) {
-				throw ApiExeception.conflict("Ya existe el espacio número " + n + "; no se creo ninguno");
+				throw ApiException.conflict("Ya existe el espacio número " + n + "; no se creo ninguno");
 			}
 			nuevos.add(EspacioParqueo.builder().numero(n).tipo(req.tipo()).build());
 		}
@@ -73,10 +73,10 @@ public class EspacioService {
 	public EspacioResponse actualizar(Long id, EspacioRequest req) {
 		EspacioParqueo e = buscar(id);
 		if (e.getEstado() == EstadoEspacio.OCUPADO) {
-			throw ApiExeception.conflict("No se puede modificar un espacio ocupado");
+			throw ApiException.conflict("No se puede modificar un espacio ocupado");
 		}
 		if (!e.getNumero().equals(req.numero()) && espacioRepo.existsByNumero(req.numero())) {
-			throw ApiExeception.conflict("Ya existe el espacio número " + req.numero());
+			throw ApiException.conflict("Ya existe el espacio número " + req.numero());
 		}
 		e.setNumero(req.numero());
 		e.setTipo(req.tipo());
@@ -87,16 +87,16 @@ public class EspacioService {
 	public void eliminar(Long id) {
 		EspacioParqueo e = buscar(id);
 		if (e.getEstado() == EstadoEspacio.OCUPADO) {
-			throw ApiExeception.conflict("No se puede eliminar un espacio ocupado");
+			throw ApiException.conflict("No se puede eliminar un espacio ocupado");
 		}
 		if (registroRepo.existsByEspacio(e)) {
-			throw ApiExeception.conflict("El espacio tiene historial de registros y  no puede eliminarse");
+			throw ApiException.conflict("El espacio tiene historial de registros y  no puede eliminarse");
 		}
 		espacioRepo.delete(e);
 	}
 
 	private EspacioParqueo buscar(Long id) {
-		return espacioRepo.findById(id).orElseThrow(() -> ApiExeception.notFound("Espacio " + id + " no encontrado"));
+		return espacioRepo.findById(id).orElseThrow(() -> ApiException.notFound("Espacio " + id + " no encontrado"));
 	}
 
 }
